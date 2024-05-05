@@ -43,7 +43,7 @@ const Header = () => {
                     <GameName>{game.name}</GameName>
                     {Object.keys(game.hoverOptions).length > 0 && (
                         <DropdownContent className="dropdown-content">
-                            {Object.entries(game.hoverOptions).map(([key, value]) => (
+                            {Object.entries(game.hoverOptions).map(([key, value], index, array) => (
                                 <DropdownItem key={key}>{value}</DropdownItem>
                             ))}
                         </DropdownContent>
@@ -52,7 +52,6 @@ const Header = () => {
             ))}
         </MainHeader>
     );
-
 }
 
 const MainHeader = styled.header`
@@ -90,6 +89,7 @@ const GameMenu = styled.div`
         font-weight: bold;
         > div.dropdown-content {
             display: block; // 드롭다운 보여주기
+            background-color: black;
         }
     }
 `;
@@ -119,13 +119,13 @@ const DropdownContent = styled.div`
 `;
 
 const DropdownItem = styled.div`
-    color: black;
+    color: white;
     padding: 12px 16px;
     text-decoration: none;
     display: block;
-    &:hover {
-        background-color: #f1f1f1; // 아이템 호버 배경색 변경
-    }
+    cursor: pointer;
+    //  밑줄 긋는법
+    border-bottom: gray;
 `;
 
 const GameName = styled.div`

@@ -1,12 +1,14 @@
 import Header from "../Header";
-import Footer from "../Footer";
+import GlobalStyle from "../../styles/GlobalStyle";
 
 const Layout = ({children}) => {
     return (
         <>
+            <GlobalStyle/>
             <Header/>
+            <div className="main-content">
                 {children}
-            <Footer/>
+            </div>
         </>
     );
 }
