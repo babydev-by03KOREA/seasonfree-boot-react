@@ -1,12 +1,12 @@
 import {Route, Routes} from "react-router-dom";
-import LineageMain from "../container/bbs/Lineage";
 import MainPage from "../Main";
+import Write from "../container/bbs/Write";
 
 const Router = () => {
     return (
         <Routes>
             <Route path="/" element={<MainPage/>}/>
-            <Route path="/lineage" element={<LineageMain/>}/>
+            <Route path="/write" element={<Write/>}/>
         </Routes>
     )
 }

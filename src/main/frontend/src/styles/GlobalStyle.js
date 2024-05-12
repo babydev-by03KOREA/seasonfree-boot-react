@@ -2,7 +2,9 @@ import {createGlobalStyle} from "styled-components";
 
 const GlobalStyle = createGlobalStyle`
   .main-content {
-    padding: 0 10%;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
   }
 `;
 

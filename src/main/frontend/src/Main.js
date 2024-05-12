@@ -1,6 +1,6 @@
 import SizeBox from "./components/common/SizeBox";
 import styled from "styled-components";
-import Login from "./components/user/login";
+import Login from "./container/user/Login";
 
 const MainPage = () => {
     // const [data, setData] = useState(null);
@@ -100,7 +100,8 @@ const FirstContainer = styled.div`
 `;
 
 const SecondContainer = styled.div`
-    margin-right: 10px;`;
+    margin-right: 10px;
+`;
 
 const ThirdContainer = styled.div`
     margin-right: 10px;
