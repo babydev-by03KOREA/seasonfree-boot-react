@@ -30,16 +30,16 @@ const Overlay = styled.div`
 `;
 
 const PopupModal = styled.div`
+    width: 35%;
     background-color: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     position: relative;
-    width: 300px; // Adjust as necessary
 `;
 
 const PopupHeader = styled.h2`
-    margin: 0;
+    padding-left: 10px;
 `;
 
 const PopupContent = styled.div`

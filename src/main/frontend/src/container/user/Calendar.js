@@ -120,17 +120,9 @@ const CalendarComponent = () => {
     );
 }
 
-const CalendarContainer = styled.div`
+const CalendarContainer = styled.div``;
 
-`;
-
-const CalendarTitle = styled.span`
-
-`;
-
-const CalendarDateRow = styled.div`
-
-`;
+const CalendarDateRow = styled.div``;
 
 const TodayText = styled.span``;
 

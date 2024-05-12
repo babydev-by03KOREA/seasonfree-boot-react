@@ -30,4 +30,10 @@ public class Post {
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    // 관련 url1
+
+    // 관련 url2
+
+    // 추천글 / 일반글
 }

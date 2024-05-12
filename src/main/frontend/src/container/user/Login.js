@@ -7,19 +7,39 @@ import InputComponent from "../../components/common/Input";
 import ButtonComponent from "../../components/common/Button";
 import Popup from "../../components/common/Popup";
 import StyledCalendar from "./Calendar";
+import Join from "./Join";
+import FindIdOrPassword from "./FindIdOrPassword";
 
 const Login = () => {
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
-    const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const [isAttendancePopupOpen, setIsAttendancePopupOpen] = useState(false);
+    const [isJoinPopupOpen, setIsJoinPopupOpen] = useState(false);
+    const [isfindIdOrPasswordOpen, setIsFindIdOrPasswordOpen] = useState(false);
 
-    const handleOpenPopup = () => {
-        setIsPopupOpen(true);
+    const handleAttendanceOpenPopup = () => {
+        setIsAttendancePopupOpen(true);
     };
 
-    const handleClosePopup = () => {
-        setIsPopupOpen(false);
+    const handleAttendanceClosePopup = () => {
+        setIsAttendancePopupOpen(false);
     };
+
+    const handleJoinOpenPopup = () => {
+        setIsJoinPopupOpen(true);
+    }
+
+    const handleJoinClosePopup = () => {
+        setIsJoinPopupOpen(false);
+    }
+
+    const handleOpenFindIdOrPassword = () => {
+        setIsFindIdOrPasswordOpen(true);
+    }
+
+    const handleFindIdOrPasswordClosePopup = () => {
+        setIsFindIdOrPasswordOpen(false);
+    }
 
     const Login = async () => {
         try {
@@ -53,22 +73,38 @@ const Login = () => {
                 onClick={Login}
             />
             <LoginRow>
-                <div onClick={handleOpenPopup}>
+                <div onClick={handleAttendanceOpenPopup}>
                     <FontAwesomeIcon icon={faCalendarCheck}/>
                     <AttendanceCheck>출석체크</AttendanceCheck>
                 </div>
                 <div>
-                    <Join>회원가입</Join>
-                    <Found>ID\PW 찾기</Found>
+                    <JoinButton onClick={handleJoinOpenPopup}>회원가입</JoinButton>
+                    <FoundButton onClick={handleOpenFindIdOrPassword}>ID\PW 찾기</FoundButton>
                 </div>
             </LoginRow>
             {/* 만약 '출석체크'를 눌렀다면 팝업창을 띄워주세요. */}
-            {isPopupOpen && (
+            {isAttendancePopupOpen && (
                 <Popup
-                    isOpen={isPopupOpen}
+                    isOpen={isAttendancePopupOpen}
                     title="출석부"
                     content={<StyledCalendar/>}
-                    onClose={handleClosePopup}
+                    onClose={handleAttendanceClosePopup}
+                />
+            )}
+            {isJoinPopupOpen && (
+                <Popup
+                    isOpen={isJoinPopupOpen}
+                    title="회원가입"
+                    content={<Join/>}
+                    onClose={handleJoinClosePopup}
+                />
+            )}
+            {isfindIdOrPasswordOpen && (
+                <Popup
+                    isOpen={isfindIdOrPasswordOpen}
+                    title="아이디/비밀번호 찾기"
+                    content={<FindIdOrPassword/>}
+                    onClose={handleFindIdOrPasswordClosePopup}
                 />
             )}
         </LoginContainer>
@@ -95,12 +131,12 @@ const AttendanceCheck = styled.span`
     font-weight: bold;
 `;
 
-const Join = styled.span`
+const JoinButton = styled.span`
     color: dodgerblue;
     font-weight: bold;
 `;
 
-const Found = styled.span`
+const FoundButton = styled.span`
     color: dodgerblue;
     font-weight: bold;
 `;
