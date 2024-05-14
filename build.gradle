@@ -75,7 +75,6 @@ dependencies {
     implementation 'org.springframework.session:spring-session-core'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
 }
 
 tasks.named('test') {

@@ -1,6 +1,7 @@
 import SizeBox from "./components/common/SizeBox";
 import styled from "styled-components";
 import Login from "./container/user/Login";
+import RealTimePosts from "./container/bbs/RealTimePosts";
 
 const MainPage = () => {
     // const [data, setData] = useState(null);
@@ -33,6 +34,12 @@ const MainPage = () => {
     ];
 
     const BannerArray895x100 = [
+        {id: "banner1", name: "광고베너1", width: "895px", height: "100px"},
+        {id: "banner2", name: "광고베너2", width: "895px", height: "100px"},
+        {id: "banner3", name: "광고베너3", width: "895px", height: "100px"},
+        {id: "banner1", name: "광고베너1", width: "895px", height: "100px"},
+        {id: "banner2", name: "광고베너2", width: "895px", height: "100px"},
+        {id: "banner3", name: "광고베너3", width: "895px", height: "100px"},
         {id: "banner1", name: "광고베너1", width: "895px", height: "100px"},
         {id: "banner2", name: "광고베너2", width: "895px", height: "100px"},
         {id: "banner3", name: "광고베너3", width: "895px", height: "100px"}
@@ -70,15 +77,21 @@ const MainPage = () => {
             </SecondContainer>
 
             <ThirdContainer>
-                <SizeBox width={"895px"} height={"100px"}/>
-                <SizeBox width={"895px"} height={"100px"}/>
-                <SizeBox width={"895px"} height={"100px"}/>
-                {/* LIVE POST */}
-                <SizeBox width={"895px"} height={"100px"}/>
-                <SizeBox width={"895px"} height={"100px"}/>
-                <SizeBox width={"895px"} height={"100px"}/>
-                <SizeBox width={"895px"} height={"100px"}/>
-                <SizeBox width={"895px"} height={"100px"}/>
+                {
+                    <div>
+                        {BannerArray895x100.slice(0, 3).map(banner => (
+                            <SizeBox key={banner.id} width={banner.width} height={banner.height}>
+                                {banner.name}
+                            </SizeBox>
+                        ))}
+                        <RealTimePosts/>
+                        {BannerArray895x100.slice(3).map(banner => (
+                            <SizeBox key={banner.id} width={banner.width} height={banner.height}>
+                                {banner.name}
+                            </SizeBox>
+                        ))}
+                    </div>
+                }
             </ThirdContainer>
 
             <FourthContainer>

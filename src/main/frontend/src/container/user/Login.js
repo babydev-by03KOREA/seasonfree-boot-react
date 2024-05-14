@@ -15,7 +15,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [isAttendancePopupOpen, setIsAttendancePopupOpen] = useState(false);
     const [isJoinPopupOpen, setIsJoinPopupOpen] = useState(false);
-    const [isfindIdOrPasswordOpen, setIsFindIdOrPasswordOpen] = useState(false);
+    const [isFindIdOrPasswordOpen, setIsFindIdOrPasswordOpen] = useState(false);
 
     const handleAttendanceOpenPopup = () => {
         setIsAttendancePopupOpen(true);
@@ -72,16 +72,16 @@ const Login = () => {
                 text={'로그인'}
                 onClick={Login}
             />
-            <LoginRow>
-                <div onClick={handleAttendanceOpenPopup}>
+            <OptionRow>
+                <CalendarCheck onClick={handleAttendanceOpenPopup}>
                     <FontAwesomeIcon icon={faCalendarCheck}/>
                     <AttendanceCheck>출석체크</AttendanceCheck>
-                </div>
-                <div>
+                </CalendarCheck>
+                <JoinAndFound>
                     <JoinButton onClick={handleJoinOpenPopup}>회원가입</JoinButton>
                     <FoundButton onClick={handleOpenFindIdOrPassword}>ID\PW 찾기</FoundButton>
-                </div>
-            </LoginRow>
+                </JoinAndFound>
+            </OptionRow>
             {/* 만약 '출석체크'를 눌렀다면 팝업창을 띄워주세요. */}
             {isAttendancePopupOpen && (
                 <Popup
@@ -99,9 +99,9 @@ const Login = () => {
                     onClose={handleJoinClosePopup}
                 />
             )}
-            {isfindIdOrPasswordOpen && (
+            {isFindIdOrPasswordOpen && (
                 <Popup
-                    isOpen={isfindIdOrPasswordOpen}
+                    isOpen={isFindIdOrPasswordOpen}
                     title="아이디/비밀번호 찾기"
                     content={<FindIdOrPassword/>}
                     onClose={handleFindIdOrPasswordClosePopup}
@@ -122,23 +122,39 @@ const LoginContainer = styled.div`
     align-items: center;
 `;
 
-const LoginRow = styled.div`
-    margin: 10px 0;
+const OptionRow = styled.div`
     display: flex;
+    justify-content: space-between;
+    width: 100%; // 전체 너비를 사용하도록 설정
+`;
+
+const CalendarCheck = styled.div`
+    cursor: pointer;
+    display: flex;
+    align-items: center; // 아이콘과 텍스트를 세로 중앙 정렬
+    margin-left: 10px;
 `;
 
 const AttendanceCheck = styled.span`
-    font-weight: bold;
+    margin-left: 2px;
+`; // div 대신 span 사용을 권장 (인라인 요소로)
+
+const JoinAndFound = styled.div`
+    display: flex;
+    gap: 10px; // 버튼 사이에 간격 추가
 `;
 
 const JoinButton = styled.span`
+    padding: 5px 0;
     color: dodgerblue;
-    font-weight: bold;
+    cursor: pointer;
 `;
 
 const FoundButton = styled.span`
+    padding: 5px 0;
+    cursor: pointer;
     color: dodgerblue;
-    font-weight: bold;
+    margin-right: 10px;
 `;
 
 export default Login;

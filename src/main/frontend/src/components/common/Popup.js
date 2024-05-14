@@ -41,6 +41,7 @@ const PopupModal = styled.div`
 const PopupHeader = styled.h2`
     text-align: center;
     padding-left: 10px;
+    color: black;
 `;
 
 const PopupContent = styled.div`

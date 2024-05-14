@@ -6,40 +6,60 @@ import CountryOfWind from "../assets/images/games/Untitled-2-03.png"
 import Maple from "../assets/images/games/Untitled-2-04.png"
 import Diablo from "../assets/images/games/Untitled-2-05.png"
 import Iron from "../assets/images/games/Untitled-2-06.png"
-import DarkYeden from "../assets/images/games/Untitled-2-07.png"
-import Dunpa from "../assets/images/games/Untitled-2-08.png"
+import Dunpa from "../assets/images/games/Untitled-2-07.png"
+import DarkYeden from "../assets/images/games/Untitled-2-08.png"
 import StonAge from "../assets/images/games/Untitled-2-09.png"
 import Etc from "../assets/images/games/Untitled-2-10.png"
 import CS from "../assets/images/games/Untitled-2-11.png"
 import {useNavigate} from "react-router-dom";
+import {useState} from "react";
+import Popup from "./common/Popup";
+import CustomerService from "../container/user/CustomerService";
 
 const Header = () => {
     const navigate = useNavigate();
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+    const handleOpenPopup = () => {
+        setIsPopupOpen(true);
+    }
+
+    const handleClosePopup = () => {
+        setIsPopupOpen(false);
+    }
 
     const navigationMain = () => {
         navigate("/");
     };
 
+    const handleCustomerServiceClick = () => {
+        handleOpenPopup();
+    };
+
+    const handleNavigate = (path) => {
+        navigate(path);
+    }
+
     const MenuValues = [
         {name: "리니지", image: Lineage, hoverOptions: {option1: "리니지2", option2: "리마스터", option3: "리니지M"}},
-        {name: "뮤", image: Mue, hoverOptions: {}},
-        {name: "바람의나라", image: CountryOfWind, hoverOptions: {}},
-        {name: "메이플", image: Maple, hoverOptions: {}},
-        {name: "디아블로", image: Diablo, hoverOptions: {}},
-        {name: "아이온", image: Iron, hoverOptions: {}},
-        {name: "다크에덴", image: DarkYeden, hoverOptions: {}},
-        {name: "던파", image: Dunpa, hoverOptions: {}},
-        {name: "스톤에이지", image: StonAge, hoverOptions: {}},
-        {name: "기타", image: Etc, hoverOptions: {}},
-        {name: "고객센터", image: CS, hoverOptions: {}},
+        {name: "뮤", image: Mue, hoverOptions: {}, path: "/mue"},
+        {name: "바람의나라", image: CountryOfWind, hoverOptions: {},  path: "/baram"},
+        {name: "메이플", image: Maple, hoverOptions: {},  path: "/maple"},
+        {name: "디아블로", image: Diablo, hoverOptions: {},  path: "/diablo"},
+        {name: "아이온", image: Iron, hoverOptions: {}, path: "/aion"},
+        {name: "다크에덴", image: DarkYeden, hoverOptions: {}, path: "/darkeden"},
+        {name: "던파", image: Dunpa, hoverOptions: {}, path: "/df"},
+        {name: "스톤에이지", image: StonAge, hoverOptions: {}, path: "/stonage"},
+        {name: "기타", image: Etc, hoverOptions: {}, path: "/etc"},
+        {name: "고객센터", image: CS, hoverOptions: {}, onClick: handleCustomerServiceClick},
     ];
 
     return (
         <MainHeader>
             <LogoImage onClick={navigationMain}/>
             {MenuValues.map((game) => (
-                <GameMenu key={game.name}>
-                    <GameImage style={{backgroundImage: `url(${game.image})`}}/>
+                <GameMenu key={game.name} onClick={() => game.onClick ? game.onClick() : handleNavigate(game.path)}>
+                <GameImage style={{backgroundImage: `url(${game.image})`}}/>
                     <GameName>{game.name}</GameName>
                     {Object.keys(game.hoverOptions).length > 0 && (
                         <DropdownContent className="dropdown-content">
@@ -50,6 +70,14 @@ const Header = () => {
                     )}
                 </GameMenu>
             ))}
+            {isPopupOpen && (
+                <Popup
+                    isOpen={isPopupOpen}
+                    title={"고객센터에 문의하기"}
+                    content={<CustomerService/>}
+                    onClose={handleClosePopup}
+                />
+            )}
         </MainHeader>
     );
 }
@@ -83,10 +111,12 @@ const GameMenu = styled.div`
     justify-content: center; // 가로 중앙 정렬
     cursor: pointer;
     position: relative; // 드롭다운 위치를 위해 relative 설정
+
     &:hover {
         background-color: white; // 호버 배경색 변경
         color: black;
         font-weight: bold;
+
         > div.dropdown-content {
             display: block; // 드롭다운 보여주기
             background-color: black;
@@ -112,7 +142,7 @@ const DropdownContent = styled.div`
     position: absolute;
     background-color: #f9f9f9;
     min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
     z-index: 1; // 다른 내용 위에 표시
     left: 0; // GameMenu의 왼쪽 정렬
     top: 100%; // GameMenu 아래에 위치

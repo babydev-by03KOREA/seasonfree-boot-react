@@ -79,6 +79,7 @@ const SubmitButton = styled.button`
 const ErrorText = styled.div`
     color: red;
     font-size: 14px;
+    padding-left: 10;
 `;
 
 export default FindId;

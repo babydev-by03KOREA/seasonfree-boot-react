@@ -240,7 +240,7 @@ const DaySpan = styled.span`
 `;
 
 const InputComponent = styled.input`
-    width: 495px;
+    width: 97%;
     padding: 8px;
     margin: 10px 0;
 `;
