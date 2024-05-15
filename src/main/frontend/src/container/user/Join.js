@@ -1,19 +1,22 @@
 import React, {useState} from 'react';
 import {useForm} from 'react-hook-form';
 import styled from "styled-components";
+import axios from "axios";
+import {JoinApi} from "../../apis/user";
 
 const Join = () => {
     const [sendEmail, setSendEmail] = useState(false);
     const [verificationSent, setVerificationSent] = useState(false);
     const {register, handleSubmit, watch, formState: {errors}} = useForm();
-    const onSubmit = data => {
+    const onSubmit = async (data) => {
         if (data.password !== data.confirmPassword) {
             alert("비밀번호가 일치하지 않습니다!");
             return;
         }
         setSendEmail(true);
         setVerificationSent(true);
-        // TODO API
+
+        await JoinApi(data.id, data.password, data.nickname, data.email);
     };
 
     return (

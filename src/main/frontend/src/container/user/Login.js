@@ -2,7 +2,7 @@ import styled from "styled-components";
 import React, {useState} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {faCalendarCheck} from "@fortawesome/free-regular-svg-icons";
-import {LoginApi} from "../../apis/auth";
+import {LoginApi} from "../../apis/user";
 import InputComponent from "../../components/common/Input";
 import ButtonComponent from "../../components/common/Button";
 import Popup from "../../components/common/Popup";
@@ -42,13 +42,9 @@ const Login = () => {
     }
 
     const Login = async () => {
-        try {
-            const data = await LoginApi(userId, password);
-            console.log('로그인 성공:', data.body);
-        } catch (error) {
-            console.error('로그인 실패:', error);
-            // 에러 처리 로직
-        }
+        // validation
+
+        await LoginApi(userId, password);
     };
 
     return(

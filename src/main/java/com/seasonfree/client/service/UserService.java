@@ -1,12 +1,26 @@
 package com.seasonfree.client.service;
 
+import com.seasonfree.client.constant.Role;
 import com.seasonfree.client.dto.request.JoinRequest;
 import com.seasonfree.client.entity.EmailMessage;
 import com.seasonfree.client.entity.User;
+import com.seasonfree.client.exception.CustomDuplicateFieldException;
+import com.seasonfree.client.jwt.JwtToken;
+import com.seasonfree.client.jwt.JwtTokenProvider;
 import com.seasonfree.client.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -15,14 +29,13 @@ import java.util.Random;
 @Slf4j
 @RequiredArgsConstructor    // final 의존성 주입 자동화
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final EmailService emailService;
-
-    @Transactional
-    public void signUp(JoinRequest joinRequest) {
-
-    }
+    private final RedisTemplate<String, String> redisTemplate;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     @Transactional
     public boolean checkEmailExistAndSendRandomNumber(String email) {
@@ -40,7 +53,7 @@ public class UserService {
     private void sendRandomNumberToEmail(String email) {
         String randomCode = createCode();
         String message = String.format("<h2>인증번호는 %s 입니다.</h2> <hr/> <h4>인증번호는 30분간 유효합니다.</h4>", randomCode);
-
+        // TODO 인증번호 REDIS 저장
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(email)
                 .subject("시즌프리 가입 인증번호입니다.")
@@ -70,5 +83,71 @@ public class UserService {
             }
         }
         return key.toString();
+    }
+
+    @Transactional
+    public boolean validationEmail(String email, String otp) {
+        String redisOtpValue = redisTemplate.opsForValue().get(email);
+        return otp != null && otp.equals(redisOtpValue);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        return userRepository.findUserByUserId(userId).orElseThrow(() -> new IllegalArgumentException(userId));
+    }
+
+    @Transactional
+    public void saveUser(JoinRequest user) {
+        try {
+            userRepository.save(User.builder()
+                    .userId(user.getUserId())
+                    .password(bCryptPasswordEncoder.encode(user.getPassword()))
+                    .nickname(user.getNickname())
+                    .email(user.getEmail())
+                    .role(Role.USER)
+                    .build());
+        } catch (DataIntegrityViolationException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
+                String constraintName = ((ConstraintViolationException) e.getCause()).getConstraintName();
+                if (constraintName.contains("email")) {
+                    throw new CustomDuplicateFieldException("이미 등록된 이메일입니다.");
+                } else if (constraintName.contains("user_id")) {
+                    throw new CustomDuplicateFieldException("이미 사용중인 사용자 ID입니다.");
+                } else if (constraintName.contains("nickname")) {
+                    throw new CustomDuplicateFieldException("이미 사용중인 닉네임입니다.");
+                }
+            }
+            throw e;
+        }
+    }
+
+    @Transactional
+    public JwtToken login(String userId, String password) {
+        // 1. username + password 를 기반으로 Authentication 객체 생성
+        // 이때 authentication 은 인증 여부를 확인하는 authenticated 값이 false
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userId, password);
+        // 2. 실제 검증. authenticate() 메서드를 통해 요청된 Member 에 대한 검증 진행
+        // authenticate 메서드가 실행될 때 CustomUserDetailsService 에서 만든 loadUserByUsername 메서드 실행
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        // 3. 인증 정보를 기반으로 JWT 토큰 생성
+        return jwtTokenProvider.generateToken(authentication);
+    }
+
+    @Transactional
+    public Optional<String> findUserIdByEmail(String email) {
+        return userRepository.findUserIdByEmail(email);
+    }
+
+    @Transactional
+    public void updatePassword(String email, String newPassword) {
+        Optional<User> userOptional = userRepository.findUserByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            String encodedPassword = bCryptPasswordEncoder.encode(newPassword);
+            user.updatePassword(encodedPassword);
+            userRepository.save(user);  // 변경 사항을 저장
+        } else {
+            throw new UsernameNotFoundException("User not found with email: " + email);
+        }
     }
 }

@@ -42,6 +42,9 @@ management:
 info:
   contact:
     email: hyeongju1122@gmail.com
+
+jwt:
+  secret: 0dda1f04f8df43a98f14843ab115a58f2ff311c1e2e6aba69d7ab2c1cc3419d2
 ---
 server:
   port: 8080
