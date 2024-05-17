@@ -1,5 +1,6 @@
 package com.seasonfree.client.entity;
 
+import com.seasonfree.client.constant.GameCategory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,12 +21,15 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 100)
-    private String mainCategory;
-
-    @Column(length = 100, nullable = true)
-    private String secondaryCategory;
+    private GameCategory mainCategory;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     private Set<Post> posts = new HashSet<>(); // Category와 Post는 1:N 관계
+
+    public Category(GameCategory mainCategory, Set<Post> posts) {
+        this.mainCategory = mainCategory;
+        this.posts = posts;
+    }
 }

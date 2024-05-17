@@ -1,27 +1,30 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, {useState} from "react";
+import {useForm} from "react-hook-form";
 import styled from "styled-components";
+import {FindIdApi, SendEmailApi, ValidateEmail} from "../../apis/user";
 
 const FindId = () => {
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const {register, handleSubmit, formState: {errors}} = useForm();
     const [sendEmail, setSendEmail] = useState(false);
     const [verificationSent, setVerificationSent] = useState(false);
 
-    const handleSendEmail = data => {
+    const handleSendEmail = async (data) => {
         console.log("Sending email to:", data.email);
-        // 이메일 전송 API 호출 예정
-        setSendEmail(true);
-        setVerificationSent(true);
+
+        await FindIdApi(data.email, setVerificationSent, setSendEmail);
     };
 
-    const handleVerifyCode = data => {
+    // REDIS 자원 공유
+    const handleVerifyCode = async (data) => {
         console.log("Verifying code:", data.code);
-        // 검증 API 호출 예정
+
+        await ValidateEmail(data.email, data.code);
     };
 
     return (
         <FormContainer>
-            <form onSubmit={handleSubmit(sendEmail ? handleVerifyCode : handleSendEmail)} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <form onSubmit={handleSubmit(sendEmail ? handleVerifyCode : handleSendEmail)}
+                  style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
                 <InputComponent
                     {...register("email", {
                         required: "이메일은 필수 입력 항목입니다.",
@@ -38,7 +41,7 @@ const FindId = () => {
                 {verificationSent && (
                     <>
                         <InputComponent
-                            {...register("code", { required: "인증번호를 입력해주세요." })}
+                            {...register("code", {required: "인증번호를 입력해주세요."})}
                             placeholder="인증번호를 입력하세요."
                         />
                         {errors.code && <ErrorText>{errors.code.message}</ErrorText>}

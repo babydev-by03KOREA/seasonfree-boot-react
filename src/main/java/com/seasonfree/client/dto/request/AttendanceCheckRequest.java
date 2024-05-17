@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class AttendanceCheckRequest {
-    private String id;
+//    private Long id;
     private String today;
     private String comment;
 }

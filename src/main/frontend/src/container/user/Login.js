@@ -1,59 +1,45 @@
 import styled from "styled-components";
 import React, {useState} from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faCalendarCheck} from "@fortawesome/free-regular-svg-icons";
-import {LoginApi} from "../../apis/user";
 import InputComponent from "../../components/common/Input";
 import ButtonComponent from "../../components/common/Button";
 import Popup from "../../components/common/Popup";
-import StyledCalendar from "./Calendar";
 import Join from "./Join";
 import FindIdOrPassword from "./FindIdOrPassword";
+import {LoginApi} from "../../apis/user";
 
-const Login = () => {
+const Login = ({ setIsLoggedIn, setUserInfo }) => {
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
-    const [isAttendancePopupOpen, setIsAttendancePopupOpen] = useState(false);
     const [isJoinPopupOpen, setIsJoinPopupOpen] = useState(false);
     const [isFindIdOrPasswordOpen, setIsFindIdOrPasswordOpen] = useState(false);
 
-    const handleAttendanceOpenPopup = () => {
-        setIsAttendancePopupOpen(true);
-    };
-
-    const handleAttendanceClosePopup = () => {
-        setIsAttendancePopupOpen(false);
-    };
-
     const handleJoinOpenPopup = () => {
         setIsJoinPopupOpen(true);
-    }
+    };
 
     const handleJoinClosePopup = () => {
         setIsJoinPopupOpen(false);
-    }
+    };
 
     const handleOpenFindIdOrPassword = () => {
         setIsFindIdOrPasswordOpen(true);
-    }
+    };
 
     const handleFindIdOrPasswordClosePopup = () => {
         setIsFindIdOrPasswordOpen(false);
-    }
-
-    const Login = async () => {
-        // validation
-
-        await LoginApi(userId, password);
     };
 
-    return(
+    const handleLogin = async () => {
+        await LoginApi(userId, password, setIsLoggedIn, setUserInfo);
+    };
+
+    return (
         <LoginContainer>
             <InputComponent
                 width={'320px'}
                 height={'20px'}
                 placeholder={'아이디를 입력하세요'}
-                onChange={setUserId}
+                onChange={e => setUserId(e.target.value)}
             />
             <InputComponent
                 width={'320px'}
@@ -61,37 +47,24 @@ const Login = () => {
                 margin={'7px 0 0 0'}
                 type={'password'}
                 placeholder={'암호를 입력하세요'}
-                onChange={setPassword}
+                onChange={e => setPassword(e.target.value)}
             />
             <ButtonComponent
                 margin={'7px 0 0 0'}
                 text={'로그인'}
-                onClick={Login}
+                onClick={handleLogin}
             />
             <OptionRow>
-                <CalendarCheck onClick={handleAttendanceOpenPopup}>
-                    <FontAwesomeIcon icon={faCalendarCheck}/>
-                    <AttendanceCheck>출석체크</AttendanceCheck>
-                </CalendarCheck>
                 <JoinAndFound>
                     <JoinButton onClick={handleJoinOpenPopup}>회원가입</JoinButton>
-                    <FoundButton onClick={handleOpenFindIdOrPassword}>ID\PW 찾기</FoundButton>
+                    <FoundButton onClick={handleOpenFindIdOrPassword}>ID/PW 찾기</FoundButton>
                 </JoinAndFound>
             </OptionRow>
-            {/* 만약 '출석체크'를 눌렀다면 팝업창을 띄워주세요. */}
-            {isAttendancePopupOpen && (
-                <Popup
-                    isOpen={isAttendancePopupOpen}
-                    title="출석부"
-                    content={<StyledCalendar/>}
-                    onClose={handleAttendanceClosePopup}
-                />
-            )}
             {isJoinPopupOpen && (
                 <Popup
                     isOpen={isJoinPopupOpen}
                     title="회원가입"
-                    content={<Join/>}
+                    content={<Join />}
                     onClose={handleJoinClosePopup}
                 />
             )}
@@ -99,13 +72,13 @@ const Login = () => {
                 <Popup
                     isOpen={isFindIdOrPasswordOpen}
                     title="아이디/비밀번호 찾기"
-                    content={<FindIdOrPassword/>}
+                    content={<FindIdOrPassword />}
                     onClose={handleFindIdOrPasswordClosePopup}
                 />
             )}
         </LoginContainer>
     );
-}
+};
 
 const LoginContainer = styled.div`
     width: 350px;
@@ -123,17 +96,6 @@ const OptionRow = styled.div`
     justify-content: space-between;
     width: 100%; // 전체 너비를 사용하도록 설정
 `;
-
-const CalendarCheck = styled.div`
-    cursor: pointer;
-    display: flex;
-    align-items: center; // 아이콘과 텍스트를 세로 중앙 정렬
-    margin-left: 10px;
-`;
-
-const AttendanceCheck = styled.span`
-    margin-left: 2px;
-`; // div 대신 span 사용을 권장 (인라인 요소로)
 
 const JoinAndFound = styled.div`
     display: flex;

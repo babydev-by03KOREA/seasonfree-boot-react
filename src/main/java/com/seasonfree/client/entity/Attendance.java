@@ -1,12 +1,10 @@
 package com.seasonfree.client.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -24,8 +22,16 @@ public class Attendance {
     private User user;
 
     @Column(nullable = false)
-    private LocalDate checkDate;
+    private LocalDateTime checkDateTime;
 
     @Column(nullable = true)
     private String comment;
+
+    @Builder
+    public Attendance(Long id, User user, LocalDateTime checkDateTime, String comment) {
+        this.id = id;
+        this.user = user;
+        this.checkDateTime = checkDateTime;
+        this.comment = comment;
+    }
 }

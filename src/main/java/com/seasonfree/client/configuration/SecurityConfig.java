@@ -27,12 +27,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/bbs/write", "/user/attendance").hasAuthority(Role.USER.getKey()) // 특정 경로에 대한 권한 설정
-                        .anyRequest().permitAll())  // 그 외의 모든 요청에 대해 접근 허용
+                        .requestMatchers("/bbs/write/**", "/attendance/check", "/user/info").hasAuthority("user")
+                        .anyRequest().permitAll())
+                .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))  // 세션 정책 설정
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))  // 세션 정책 설정
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class); // JWT 인증 필터 추가
         return http.build();
     }
-
 }

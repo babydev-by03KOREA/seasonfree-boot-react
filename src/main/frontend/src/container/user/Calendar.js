@@ -17,6 +17,8 @@ import {AiOutlineLeft, AiOutlineRight} from "react-icons/ai";
 import {faCheck, faCircleCheck} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {useForm} from "react-hook-form";
+import {CalendarApi} from "../../apis/calendar";
+import Swal from "sweetalert2";
 
 const CalendarComponent = () => {
     const week = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
@@ -37,6 +39,8 @@ const CalendarComponent = () => {
     let days = []; // 한 주의 전체 데이터
     let formattedDate = ""; // 배열 삽입용 하루 날짜의 데이터
 
+    // BackEnd
+    // String string = "2019-01-10";
     const marks = [
         "2024-05-04",
         "2024-05-10",
@@ -89,9 +93,24 @@ const CalendarComponent = () => {
     };
 
     const {register, handleSubmit, formState: {errors}} = useForm();
-    const onSubmit = data => {
-        console.log(data);
-        // 여기서 데이터를 서버로 전송
+
+    const onSubmit = async (formData) => {
+        try {
+            const today = new Date().toISOString().split('T')[0];  // 'YYYY-MM-DD' 형식의 문자열
+            const { comment } = formData;  // form에서 'comment'를 추출합니다.
+            const result = await CalendarApi(today, comment);
+            Swal.fire({
+                title: "성공",
+                text: "출석체크에 성공하였습니다.",
+                icon: "success"
+            });
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "에러",
+                text: error.message
+            });
+        }
     };
 
     return (
@@ -124,10 +143,10 @@ const CalendarComponent = () => {
                 <AttendanceBox>
                     <InputComponent
                         placeholder="오늘의 한마디를 남겨주세요(10자 이상)"
-                        {...register("message", { required: true, minLength: 10 })}
+                        {...register("comment", { required: true, minLength: 10 })}
                     />
-                    {errors.message && errors.message.type === "required" && <div style={{color: "red"}}>한마디를 입력해주세요.</div>}
-                    {errors.message && errors.message.type === "minLength" && <div style={{color: "red"}}>한마디는 최소 10자 이상이어야 합니다.</div>}
+                    {errors.comment && errors.comment.type === "required" && <div style={{color: "red"}}>한마디를 입력해주세요.</div>}
+                    {errors.comment && errors.comment.type === "minLength" && <div style={{color: "red"}}>한마디는 최소 10자 이상이어야 합니다.</div>}
                 </AttendanceBox>
                 <SubmitButton>출석체크하기</SubmitButton>
             </CalendarContainer>

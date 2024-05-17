@@ -12,6 +12,7 @@ const WritePage = () => {
 
     const handleValueChange = (content) => {  // 입력값 변경 처리
         setContext(content);
+        console.log(content);
     };
 
     return (

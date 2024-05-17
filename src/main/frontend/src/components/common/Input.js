@@ -9,7 +9,7 @@ const InputComponent = ({width = '100px', height = '30px', placeholder = '', onC
     const handleInputChange = (e) => {
         const value = e.target.value;
         setInputValue(value);
-        onChange(value);  // 부모 컴포넌트로 값 전달
+        onChange(e);  // 부모 컴포넌트로 값 전달
     };
 
     // Input 컴포넌트에 width와 height props를 전달

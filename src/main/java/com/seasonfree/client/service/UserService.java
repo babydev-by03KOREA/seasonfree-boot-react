@@ -2,7 +2,9 @@ package com.seasonfree.client.service;
 
 import com.seasonfree.client.constant.Role;
 import com.seasonfree.client.dto.request.JoinRequest;
+import com.seasonfree.client.dto.request.UserDTO;
 import com.seasonfree.client.entity.EmailMessage;
+import com.seasonfree.client.entity.Point;
 import com.seasonfree.client.entity.User;
 import com.seasonfree.client.exception.CustomDuplicateFieldException;
 import com.seasonfree.client.jwt.JwtToken;
@@ -23,6 +25,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -98,26 +102,30 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void saveUser(JoinRequest user) {
-        try {
-            userRepository.save(User.builder()
-                    .userId(user.getUserId())
-                    .password(bCryptPasswordEncoder.encode(user.getPassword()))
-                    .nickname(user.getNickname())
-                    .email(user.getEmail())
-                    .role(Role.USER)
-                    .build());
-        } catch (DataIntegrityViolationException e) {
-            if (e.getCause() instanceof ConstraintViolationException) {
-                String constraintName = ((ConstraintViolationException) e.getCause()).getConstraintName();
-                if (constraintName.contains("email")) {
-                    throw new CustomDuplicateFieldException("이미 등록된 이메일입니다.");
-                } else if (constraintName.contains("user_id")) {
-                    throw new CustomDuplicateFieldException("이미 사용중인 사용자 ID입니다.");
-                } else if (constraintName.contains("nickname")) {
-                    throw new CustomDuplicateFieldException("이미 사용중인 닉네임입니다.");
+        if (validationEmail(user.getEmail(), user.getOtp())) {
+            try {
+                String imageUrl = Optional.ofNullable(user.getImage()).orElse(null);
+                userRepository.save(User.builder()
+                        .userId(user.getUserId())
+                        .password(bCryptPasswordEncoder.encode(user.getPassword()))
+                        .nickname(user.getNickname())
+                        .email(user.getEmail())
+                        .imageUrl(imageUrl)
+                        .role(Role.USER)
+                        .build());
+            } catch (DataIntegrityViolationException e) {
+                if (e.getCause() instanceof ConstraintViolationException) {
+                    String constraintName = ((ConstraintViolationException) e.getCause()).getConstraintName();
+                    if (constraintName.contains("email")) {
+                        throw new CustomDuplicateFieldException("이미 등록된 이메일입니다.");
+                    } else if (constraintName.contains("user_id")) {
+                        throw new CustomDuplicateFieldException("이미 사용중인 사용자 ID입니다.");
+                    } else if (constraintName.contains("nickname")) {
+                        throw new CustomDuplicateFieldException("이미 사용중인 닉네임입니다.");
+                    }
                 }
+                throw e;
             }
-            throw e;
         }
     }
 
@@ -126,16 +134,28 @@ public class UserService implements UserDetailsService {
         // 1. username + password 를 기반으로 Authentication 객체 생성
         // 이때 authentication 은 인증 여부를 확인하는 authenticated 값이 false
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userId, password);
+
         // 2. 실제 검증. authenticate() 메서드를 통해 요청된 Member 에 대한 검증 진행
         // authenticate 메서드가 실행될 때 CustomUserDetailsService 에서 만든 loadUserByUsername 메서드 실행
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
+        // user 정보 claim 에 넣기
+        User user = userRepository.findUserByUserId(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저 아이디를 찾을 수 없습니다."));
+
+        log.info("userName: {}, nickname: {}", user.getUsername(), user.getNickname());
         // 3. 인증 정보를 기반으로 JWT 토큰 생성
-        return jwtTokenProvider.generateToken(authentication);
+        return jwtTokenProvider.generateToken(user.getUsername(), user.getNickname(), authentication);
     }
 
     @Transactional
-    public Optional<String> findUserIdByEmail(String email) {
-        return userRepository.findUserIdByEmail(email);
+    public Optional<String> findUserIdByEmail(String email, String otp) {
+        boolean isValid = validationEmail(email, otp);
+        if (isValid) {
+            return userRepository.findUserIdByEmail(email);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Transactional
@@ -149,5 +169,28 @@ public class UserService implements UserDetailsService {
         } else {
             throw new UsernameNotFoundException("User not found with email: " + email);
         }
+    }
+
+    public Map<String, String> newAccessToken(String refreshToken) {
+        String userEmail = jwtTokenProvider.getUsernameFromToken(refreshToken);
+        log.info("userEmail: {}", userEmail);
+        User user = userRepository.findUserByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저 이메일을 찾을 수 없습니다."));
+        String newAccessToken = jwtTokenProvider.createToken(userEmail, user.getUsername(), user.getNickname(), user.getRole().getKey());
+        Map<String, String> response = new HashMap<>();
+        response.put("accessToken", newAccessToken);
+        return response;
+    }
+
+    public UserDTO getUserInfoByEmail(String email) {
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException("해당하는 이메일의 유저를 찾을 수 없습니다. by: " + email));
+
+        // 포인트 계산 로직 추가
+        int totalPoints = user.getPoints().stream().mapToInt(Point::getPointChange).sum();
+
+        // Optional imageUrl 생성
+        Optional<String> imageUrl = Optional.ofNullable(user.getImageUrl());
+
+        return new UserDTO(user.getNickname(), totalPoints, imageUrl);
     }
 }

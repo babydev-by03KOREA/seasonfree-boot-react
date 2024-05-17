@@ -8,4 +8,6 @@ public class JoinRequest {
     private String password;
     private String nickname;
     private String email;
+    private String otp;
+    private String image;
 }

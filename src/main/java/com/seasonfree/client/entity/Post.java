@@ -1,10 +1,10 @@
 package com.seasonfree.client.entity;
 
+import com.seasonfree.client.constant.PostType;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -32,8 +32,37 @@ public class Post {
     private String content;
 
     // 관련 url1
+    @Column
+    private String urlOne;
 
     // 관련 url2
+    @Column
+    private String urlTwo;
 
     // 추천글 / 일반글
+    @Column
+    @Enumerated(EnumType.STRING)
+    private PostType postType;
+
+    // 작성일
+    @Column
+    private LocalDate writeDate;
+
+    // 조회수
+    @Column
+    private int watch;
+
+    @Builder
+    public Post(Long id, User user, Category category, String title, String content, String urlOne, String urlTwo, PostType postType, LocalDate writeDate, int watch) {
+        this.id = id;
+        this.user = user;
+        this.category = category;
+        this.title = title;
+        this.content = content;
+        this.urlOne = urlOne;
+        this.urlTwo = urlTwo;
+        this.postType = postType;
+        this.writeDate = writeDate;
+        this.watch = watch;
+    }
 }

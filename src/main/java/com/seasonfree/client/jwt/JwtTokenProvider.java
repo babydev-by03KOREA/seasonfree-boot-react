@@ -23,28 +23,56 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
     private final Key key;
+    private long validityInMilliseconds = 3600000; // 1 hour
 
     public JwtTokenProvider(@Value("${jwt.secret}") String security) {
         byte[] keyBytes = Decoders.BASE64.decode(security);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public JwtToken generateToken(Authentication authentication) {
-        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
+        public JwtToken generateToken(String userName, String userNickname, Authentication authentication) {
+            String authorities = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.joining(","));
 
-        long now = (new Date()).getTime();
+            long now = System.currentTimeMillis(); // 현재 시간을 밀리초 단위로 가져옴
 
-        // CREATE ACCESS TOKEN
-        Date accessTokenExpires = new Date(now + 86400000);
-        String accessToken = Jwts.builder().setSubject(authentication.getName()).claim("auth", authorities).setExpiration(accessTokenExpires).signWith(key, SignatureAlgorithm.HS256).compact();
+            // 엑세스 토큰 생성 - 1시간 후 만료
+            Date accessTokenExpires = new Date(now + validityInMilliseconds); // 1시간 = 3,600,000 밀리초
 
-        // CREATE REFRESH TOKEN
-        String refreshToken = Jwts.builder().setExpiration(new Date(now + 86400000)).signWith(key, SignatureAlgorithm.HS256).compact();
+            // email
+            log.info("authentication.getName: {}", authentication.getName());
+            // role
+            log.info("authorization: {}", authorities);
 
-        return JwtToken.builder().grantType("Bearer").accessToken(accessToken).refreshToken(refreshToken).build();
-    }
+            String accessToken = Jwts.builder()
+                    .setSubject(authentication.getName())
+                    .claim("username", userName)
+                    .claim("nickname", userNickname)
+                    .claim("auth", authorities)
+                    .setIssuedAt(new Date(now))
+                    .setExpiration(accessTokenExpires)
+                    .signWith(key, SignatureAlgorithm.HS256)
+                    .compact();
+
+            // 리프레시 토큰 생성 - 6개월 후 만료
+            Date refreshTokenExpires = new Date(now + 15_552_000_000L); // 약 6개월
+            String refreshToken = Jwts.builder()
+                    .setSubject(authentication.getName())
+                    .setIssuedAt(new Date(now))
+                    .setExpiration(refreshTokenExpires)
+                    .signWith(key, SignatureAlgorithm.HS256)
+                    .compact();
+
+            return JwtToken.builder()
+                    .grantType("Bearer")
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+        }
 
     // Jwt 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드
+    // Spring Security의 인증된 사용자 세션
     public Authentication getAuthentication(String accessToken) {
         // Jwt 토큰 복호화
         Claims claims = parseClaims(accessToken);
@@ -96,4 +124,31 @@ public class JwtTokenProvider {
             return e.getClaims();
         }
     }
+
+    public String getUsernameFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+    public String createToken(String userEmail, String username, String nickname, String auth) {
+        Claims claims = Jwts.claims().setSubject(username);
+        claims.put("username", userEmail);
+        claims.put("nickname", nickname);
+        claims.put("auth", auth);
+
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + validityInMilliseconds);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
 }

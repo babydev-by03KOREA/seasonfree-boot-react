@@ -3,12 +3,15 @@ package com.seasonfree.client.controller;
 import com.seasonfree.client.dto.request.*;
 import com.seasonfree.client.exception.CustomDuplicateFieldException;
 import com.seasonfree.client.jwt.JwtToken;
+import com.seasonfree.client.jwt.JwtTokenProvider;
 import com.seasonfree.client.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +25,9 @@ import java.util.Optional;
 @CrossOrigin
 public class UserController {
     private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
 
+    // TODO 아이디 비밀번호 다를 경우에도 500 에러?
     @PostMapping("/login")
     public ResponseEntity<?> signIn(@RequestBody LoginRequest loginRequest) {
         try {
@@ -30,10 +35,10 @@ public class UserController {
             return ResponseEntity.ok().body(token);  // JWT 토큰을 응답 본문에 포함
         } catch (UsernameNotFoundException | BadCredentialsException e) {
             log.error("로그인 실패: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("아이디나 비밀번호를 확인해주세요.");
         } catch (Exception e) {
             log.error("로그인 처리 중 오류 발생: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An internal error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("내부 서버 오류가 발생했습니다.");
         }
     }
 
@@ -44,6 +49,7 @@ public class UserController {
             userService.saveUser(joinRequest);
             return ResponseEntity.ok("회원가입에 성공하였습니다!");
         } catch (CustomDuplicateFieldException e) {
+            log.error("커스텀 Exception: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             log.error("회원가입 실패: {}", e.getMessage());
@@ -51,8 +57,22 @@ public class UserController {
         }
     }
 
+    @GetMapping("/info")
+    public ResponseEntity<?> userInfo() {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.error("인증 정보가 존재하지 않음.");
+            throw new RuntimeException("인증 정보가 존재하지 않습니다.");
+        }
+
+        String userEmail = authentication.getName();
+        UserDTO userDTO = userService.getUserInfoByEmail(userEmail);
+
+        return ResponseEntity.ok(userDTO);
+    }
+
     // 이메일 인증번호 전송 > 가입이 되었으면 가입 불가 통보 findByEmail
-    @PostMapping("/mail-check")
+    @PostMapping("/email-check")
     public ResponseEntity<?> isEmailExist(@RequestBody EmailRequest email) {
         log.info("{}의 이메일 인증 시도", email);
         boolean emailSent = userService.checkEmailExistAndSendRandomNumber(email.getEmail());
@@ -75,12 +95,24 @@ public class UserController {
         }
     }
 
+    // 이메일 인증번호 전송 > 가입과 관계없이 아이디 찾기 위해
+    @PostMapping("/find-id-email")
+    public ResponseEntity<?> findIdEmail(@RequestBody EmailRequest email) {
+        log.info("{}의 아이디 찾기 인증 시도", email);
+        boolean emailSent = userService.checkEmailExistAndSendRandomNumber(email.getEmail());
+        if (emailSent) {
+            return ResponseEntity.badRequest().body("가입되지 않은 이메일입니다. 다시 확인해 주세요.");
+        } else {
+            return ResponseEntity.ok("입력하신 이메일로 인증번호를 보냈습니다.\n30분 내로 인증 부탁드립니다.");
+        }
+    }
+
     // ID 찾기
     @PostMapping("/find-id")
     public ResponseEntity<?> findId(@RequestBody EmailRequest email) {
-        Optional<String> userIdOptional = userService.findUserIdByEmail(email.getEmail());
+        Optional<String> userIdOptional = userService.findUserIdByEmail(email.getEmail(), email.getOtp());
         if (!userIdOptional.isPresent()) {
-            return ResponseEntity.badRequest().body("해당 이메일로 가입된 아이디가 존재하지 않습니다.");
+            return ResponseEntity.badRequest().body("인증번호가 잘못되었습니다. 다시 확인 해 주세요.");
         } else {
             return ResponseEntity.ok().body(String.format("가입하신 Id는 %s 입니다.", userIdOptional.get()));
         }
@@ -99,9 +131,15 @@ public class UserController {
         }
     }
 
-    // 출석체크 - [인증 필요!]
-//    @PostMapping("/attendance-check")
-//    public ResponseEntity<?> attendanceCheck(@RequestBody AttendanceCheckRequest attendanceCheckRequest) {
-//
-//    }
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+
+        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("잘못된 토큰입니다.");
+        }
+
+        Map<String, String> newAccessToken = userService.newAccessToken(refreshToken);
+        return ResponseEntity.ok(newAccessToken);
+    }
 }

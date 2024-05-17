@@ -40,17 +40,21 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column()
+    private String imageUrl;
+
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Point> points;
 
-    // 일반 회원가입
     @Builder
-    public User(String userId, String password, String nickname, String email, Role role, List<Point> points) {
+    public User(Long id, String userId, String password, String nickname, String email, Role role, String imageUrl, List<Point> points) {
+        this.id = id;
         this.userId = userId;
         this.password = password;
         this.nickname = nickname;
         this.email = email;
         this.role = role;
+        this.imageUrl = imageUrl;
         this.points = points;
     }
 
