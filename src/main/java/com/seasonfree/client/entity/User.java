@@ -12,7 +12,7 @@ import java.util.List;
 
 @Entity
 @Getter
-@ToString(exclude = "points") // 연관관계 필드는 exclude, 무한루프의 위험성 존재
+@ToString(exclude = {"points", "customerServices"}) // 연관관계 필드는 exclude, 무한루프의 위험성 존재
 @NoArgsConstructor(access = AccessLevel.PROTECTED)  // 무분별한 객체 생성 방지(의미 있는 객체 생성)
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "uid"),
@@ -46,8 +46,11 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Point> points;
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<CustomerService> customerServices;
+
     @Builder
-    public User(Long id, String userId, String password, String nickname, String email, Role role, String imageUrl, List<Point> points) {
+    public User(Long id, String userId, String password, String nickname, String email, Role role, String imageUrl, List<Point> points, List<CustomerService> customerServices) {
         this.id = id;
         this.userId = userId;
         this.password = password;
@@ -56,11 +59,12 @@ public class User implements UserDetails {
         this.role = role;
         this.imageUrl = imageUrl;
         this.points = points;
+        this.customerServices = customerServices;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("user"));
+        return List.of(new SimpleGrantedAuthority(this.role.toString()));
     }
 
     @Override

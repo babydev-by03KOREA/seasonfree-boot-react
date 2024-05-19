@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "quill-image-drop-module": "^1.0.3",
-    "quill-image-resize-module-react": "^3.0.0"
+    "quill-image-resize-module-react": "^3.0.0",
+    "react-drag-list": "^1.1.0"
   }
 }

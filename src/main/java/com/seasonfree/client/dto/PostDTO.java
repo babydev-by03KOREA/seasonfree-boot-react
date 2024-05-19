@@ -16,6 +16,7 @@ public class PostDTO {
     private PostType postType;
     private LocalDate writeDate;
     private int watch;
+    private String author;
 
     public PostDTO(Post post) {
         this.id = post.getId();
@@ -26,6 +27,7 @@ public class PostDTO {
         this.postType = post.getPostType();
         this.writeDate = post.getWriteDate();
         this.watch = post.getWatch();
+        this.author = post.getUser().getEmail();
     }
 }
 

@@ -1,10 +1,7 @@
 package com.seasonfree.client.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -39,4 +36,15 @@ public class Comment {
 
     @Column(nullable = false)
     private LocalDateTime updateAt;
+
+    @Builder
+    public Comment(Long id, User user, Post post, Comment parent, String content, LocalDateTime createAt, LocalDateTime updateAt) {
+        this.id = id;
+        this.user = user;
+        this.post = post;
+        this.parent = parent;
+        this.content = content;
+        this.createAt = createAt;
+        this.updateAt = updateAt;
+    }
 }

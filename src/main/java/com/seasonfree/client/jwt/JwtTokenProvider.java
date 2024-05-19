@@ -30,46 +30,46 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-        public JwtToken generateToken(String userName, String userNickname, Authentication authentication) {
-            String authorities = authentication.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.joining(","));
+    public JwtToken generateToken(String email, String userNickname, Authentication authentication) {
+        String authorities = authentication.getAuthorities().stream()
+                .map(grantedAuthority -> "ROLE_" + grantedAuthority.getAuthority())
+                .collect(Collectors.joining(","));
 
-            long now = System.currentTimeMillis(); // 현재 시간을 밀리초 단위로 가져옴
+        long now = System.currentTimeMillis(); // 현재 시간을 밀리초 단위로 가져옴
 
-            // 엑세스 토큰 생성 - 1시간 후 만료
-            Date accessTokenExpires = new Date(now + validityInMilliseconds); // 1시간 = 3,600,000 밀리초
+        // 엑세스 토큰 생성 - 1시간 후 만료
+        Date accessTokenExpires = new Date(now + validityInMilliseconds); // 1시간 = 3,600,000 밀리초
 
-            // email
-            log.info("authentication.getName: {}", authentication.getName());
-            // role
-            log.info("authorization: {}", authorities);
+        // email
+        log.info("authentication.getName: {}", authentication.getName());
+        // role
+        log.info("authorization: {}", authorities);
 
-            String accessToken = Jwts.builder()
-                    .setSubject(authentication.getName())
-                    .claim("username", userName)
-                    .claim("nickname", userNickname)
-                    .claim("auth", authorities)
-                    .setIssuedAt(new Date(now))
-                    .setExpiration(accessTokenExpires)
-                    .signWith(key, SignatureAlgorithm.HS256)
-                    .compact();
+        String accessToken = Jwts.builder()
+                .setSubject(email)
+                .claim("username", email    )
+                .claim("nickname", userNickname)
+                .claim("auth", authorities)
+                .setIssuedAt(new Date(now))
+                .setExpiration(accessTokenExpires)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
 
-            // 리프레시 토큰 생성 - 6개월 후 만료
-            Date refreshTokenExpires = new Date(now + 15_552_000_000L); // 약 6개월
-            String refreshToken = Jwts.builder()
-                    .setSubject(authentication.getName())
-                    .setIssuedAt(new Date(now))
-                    .setExpiration(refreshTokenExpires)
-                    .signWith(key, SignatureAlgorithm.HS256)
-                    .compact();
+        // 리프레시 토큰 생성 - 6개월 후 만료
+        Date refreshTokenExpires = new Date(now + 15_552_000_000L); // 약 6개월
+        String refreshToken = Jwts.builder()
+                .setSubject(authentication.getName())
+                .setIssuedAt(new Date(now))
+                .setExpiration(refreshTokenExpires)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
 
-            return JwtToken.builder()
-                    .grantType("Bearer")
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .build();
-        }
+        return JwtToken.builder()
+                .grantType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
 
     // Jwt 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드
     // Spring Security의 인증된 사용자 세션

@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -22,10 +23,11 @@ public class EmailService {
     private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
-    public void sendMail(EmailMessage emailMessage, String randomCode) {
+    public void sendMail(EmailMessage emailMessage, Optional<String> randomCode, int type) {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
         try {
+            log.info(emailMessage.getTo() + "에게 이메일 전송 시도");
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
             mimeMessageHelper.setTo(emailMessage.getTo()); // 메일 수신자
             mimeMessageHelper.setSubject(emailMessage.getSubject()); // 메일 제목
@@ -34,10 +36,10 @@ public class EmailService {
             // 메일 전송
             javaMailSender.send(mimeMessage);
 
-            // REDIS 30분간 저장
-            ValueOperations<String, String> valueOps = redisTemplate.opsForValue();
-            valueOps.set(emailMessage.getTo(), randomCode, 30, TimeUnit.MINUTES);
-
+            if (type == 1) {
+                ValueOperations<String, String> valueOps = redisTemplate.opsForValue();
+                valueOps.set(emailMessage.getTo(), randomCode.get(), 30, TimeUnit.MINUTES);
+            }
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }

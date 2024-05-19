@@ -31,24 +31,19 @@ public class Post {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    // 관련 url1
     @Column
     private String urlOne;
 
-    // 관련 url2
     @Column
     private String urlTwo;
 
-    // 추천글 / 일반글
     @Column
     @Enumerated(EnumType.STRING)
     private PostType postType;
 
-    // 작성일
     @Column
     private LocalDate writeDate;
 
-    // 조회수
     @Column
     private int watch;
 
@@ -64,5 +59,42 @@ public class Post {
         this.postType = postType;
         this.writeDate = writeDate;
         this.watch = watch;
+    }
+
+    // 조회수 증가 메서드
+    public Post updateWatch(int watch) {
+        return Post.builder()
+                .id(this.id)
+                .user(this.user)
+                .category(this.category)
+                .title(this.title)
+                .content(this.content)
+                .urlOne(this.urlOne)
+                .urlTwo(this.urlTwo)
+                .postType(this.postType)
+                .writeDate(this.writeDate)
+                .watch(watch)
+                .build();
+    }
+
+    // 필드 업데이트 메서드
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
+    public void updateUrlOne(String urlOne) {
+        this.urlOne = urlOne;
+    }
+
+    public void updateUrlTwo(String urlTwo) {
+        this.urlTwo = urlTwo;
+    }
+
+    public void updatePostType(PostType postType) {
+        this.postType = postType;
     }
 }

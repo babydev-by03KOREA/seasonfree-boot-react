@@ -83,7 +83,7 @@ const MainPage = () => {
             </ThirdContainer>
 
             <FourthContainer>
-                {BannerArray370x150.map(banner => (
+                {BannerArray120x500.map(banner => (
                     <SizeBox
                         key={banner.id}
                         width={banner.width}

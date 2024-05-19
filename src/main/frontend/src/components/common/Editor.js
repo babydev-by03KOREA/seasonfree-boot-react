@@ -17,7 +17,7 @@ const Editor = ({ value, onChange }) => {
         formData.append('image', file);
 
         try {
-            const response = await fetch('http://localhost:8080/image/bbs-upload', {
+            const response = await fetch('http://localhost:8080/bbs/image-upload', {
                 method: 'POST',
                 body: formData
             });

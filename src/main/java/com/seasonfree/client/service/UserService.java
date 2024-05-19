@@ -19,16 +19,15 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor    // final 의존성 주입 자동화
@@ -55,16 +54,15 @@ public class UserService implements UserDetailsService {
     }
 
     private void sendRandomNumberToEmail(String email) {
-        String randomCode = createCode();
+        Optional<String> randomCode = Optional.of(createCode());
         String message = String.format("<h2>인증번호는 %s 입니다.</h2> <hr/> <h4>인증번호는 30분간 유효합니다.</h4>", randomCode);
-        // TODO 인증번호 REDIS 저장
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(email)
                 .subject("시즌프리 가입 인증번호입니다.")
                 .message(message)
                 .build();
 
-        emailService.sendMail(emailMessage, randomCode);
+        emailService.sendMail(emailMessage, randomCode, 1);
     }
 
     // 인증번호 및 임시 비밀번호 생성 메서드
@@ -97,7 +95,14 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        return userRepository.findUserByUserId(userId).orElseThrow(() -> new IllegalArgumentException(userId));
+        User user = userRepository.findUserByUserId(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + userId));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                user.getAuthorities() // 권한 정보를 포함
+        );
     }
 
     @Transactional

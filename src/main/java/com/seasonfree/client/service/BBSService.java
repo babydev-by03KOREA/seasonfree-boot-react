@@ -2,12 +2,15 @@ package com.seasonfree.client.service;
 
 import com.seasonfree.client.constant.GameCategory;
 import com.seasonfree.client.dto.PostDTO;
+import com.seasonfree.client.dto.request.CommentRequest;
 import com.seasonfree.client.dto.request.PostRequest;
 import com.seasonfree.client.entity.Category;
+import com.seasonfree.client.entity.Comment;
 import com.seasonfree.client.entity.Post;
 import com.seasonfree.client.entity.User;
 import com.seasonfree.client.repository.BBSRepository;
 import com.seasonfree.client.repository.CategoryRepository;
+import com.seasonfree.client.repository.CommentRepository;
 import com.seasonfree.client.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,24 +34,38 @@ public class BBSService {
     private final BBSRepository bbsRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final CommentRepository commentRepository;
 
     // 게임별 리스트 로직 처리
     @Transactional(readOnly = true)
-    public Page<PostDTO> getPostsByCategory(GameCategory categoryType, int page, int size) {
+    public List<PostDTO> getPostsByCategory(GameCategory categoryType, int page, int size) {
         Category category = categoryRepository.findByMainCategory(categoryType)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts = bbsRepository.findByCategory(category, pageable);
-        List<PostDTO> postDTOs = posts.stream()
+        return posts.stream()
                 .map(PostDTO::new)
                 .collect(Collectors.toList());
+    }
 
-        return new PageImpl<>(postDTOs, pageable, posts.getTotalElements());
+    @Transactional(readOnly = true)
+    public List<PostDTO> getPostsByMultipleCategories(List<GameCategory> categoryTypes, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        List<Category> categories = categoryTypes.stream()
+                .map(categoryType -> categoryRepository.findByMainCategory(categoryType)
+                        .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다: " + categoryType)))
+                .collect(Collectors.toList());
+
+        Page<Post> posts = bbsRepository.findByCategoryIn(categories, pageable);
+        return posts.stream()
+                .map(PostDTO::new)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public void savePost(String email, GameCategory categoryType, PostRequest postRequest) {
+        log.info("email: {}", email);
         try {
             User user = userRepository.findUserByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
@@ -72,5 +90,71 @@ public class BBSService {
             log.error("저장하는데 에러 발생: {}", e.getMessage());
             throw e;
         }
+    }
+
+    @Transactional
+    public PostDTO getPostById(GameCategory categoryType, Long id) {
+        Category category = categoryRepository.findByMainCategory(categoryType)
+                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
+
+        Post post = bbsRepository.findByIdAndCategory(id, category)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        // 조회수 증가
+        Post updatedPost = post.updateWatch(post.getWatch() + 1);
+        bbsRepository.save(updatedPost);
+
+        return new PostDTO(post);
+    }
+
+    @Transactional
+    public void writeComment(String email, CommentRequest commentRequest) {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        Post post = bbsRepository.findById(commentRequest.getPostId())
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        Comment comment = Comment.builder()
+                .user(user)
+                .post(post)
+                .content(commentRequest.getComment())
+                .createAt(LocalDateTime.now())
+                .updateAt(LocalDateTime.now())
+                .build();
+
+        commentRepository.save(comment);
+    }
+
+    @Transactional
+    public PostDTO updatePost(Long id, String userEmail, PostRequest postRequest) {
+        Post post = bbsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        if (!post.getUser().getEmail().equals(userEmail)) {
+            throw new SecurityException("작성자만 수정할 수 있습니다.");
+        }
+
+        post.updateTitle(postRequest.getTitle());
+        post.updateContent(postRequest.getContent());
+        post.updateUrlOne(postRequest.getUrlOne());
+        post.updateUrlTwo(postRequest.getUrlTwo());
+        post.updatePostType(postRequest.getPostType());
+
+        bbsRepository.save(post);
+
+        return new PostDTO(post);
+    }
+
+    @Transactional
+    public void deletePost(Long id, String userEmail) {
+        Post post = bbsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        if (!post.getUser().getEmail().equals(userEmail)) {
+            throw new SecurityException("작성자만 삭제할 수 있습니다.");
+        }
+
+        bbsRepository.delete(post);
     }
 }
