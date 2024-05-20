@@ -1,17 +1,134 @@
-import styled from "styled-components";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faMagnifyingGlass, faPen, faThumbsUp} from "@fortawesome/free-solid-svg-icons";
-import {useState} from "react";
+import React, {useState, useEffect} from 'react';
+import {useNavigate, useLocation, useParams} from 'react-router-dom';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {
+    faMagnifyingGlass,
+    faPen,
+    faThumbsUp,
+    faLessThan,
+    faGreaterThan,
+    faAnglesLeft,
+    faAnglesRight
+} from '@fortawesome/free-solid-svg-icons';
+import styled from 'styled-components';
+import {GetPost} from "../../apis/BBS";
 
-const ListPage = ({gameKey}) => {
+const ListPage = () => {
+    const {gameKey} = useParams();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [totalRows, setTotalRows] = useState(0);
+    const rowsPerPage = 15;
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // Get the current page from URL query
+    const queryParams = new URLSearchParams(location.search);
+    const currentPage = parseInt(queryParams.get('page')) || 1;
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const { posts, totalRows } = await GetPost(gameKey, currentPage);
+                setPosts(posts);
+                setTotalRows(totalRows);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                setPosts([]);
+                setTotalRows(0);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [gameKey, currentPage]);
+
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+    const maxPageButtons = 10;
+    const startPage = Math.floor((currentPage - 1) / maxPageButtons) * maxPageButtons + 1;
+    const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
+
+    const handleClick = (pageNumber) => {
+        navigate(`?page=${pageNumber}`);
+    };
+
+    const handlePrevPageGroup = () => {
+        if (startPage > 1) {
+            navigate(`?page=${startPage - 1}`);
+        }
+    };
+
+    const handleNextPageGroup = () => {
+        if (endPage < totalPages) {
+            navigate(`?page=${endPage + 1}`);
+        }
+    };
+
+    const handleFirstPage = () => {
+        navigate(`?page=1`);
+    };
+
+    const handleLastPage = () => {
+        navigate(`?page=${totalPages}`);
+    };
+
+    const renderRows = () => {
+        return posts.map(post => (
+            <TableRow
+                key={post.id}
+                title={post.title}
+                nickname={post.author}
+                date={post.writeDate}
+                views={post.watch}
+            />
+        ));
+    };
+
+    const renderPagination = () => {
+        const buttons = [];
+
+        for (let i = startPage; i <= endPage; i++) {
+            buttons.push(
+                <PageButton
+                    key={i}
+                    active={i === currentPage}
+                    onClick={() => handleClick(i)}
+                >
+                    {i}
+                </PageButton>
+            );
+        }
+
+        return (
+            <Pagination>
+                <PageButton onClick={handleFirstPage} disabled={currentPage === 1}>
+                    <FontAwesomeIcon icon={faAnglesLeft}/>
+                </PageButton>
+                <PageButton onClick={handlePrevPageGroup} disabled={startPage === 1}>
+                    <FontAwesomeIcon icon={faLessThan}/>
+                </PageButton>
+                {buttons}
+                <PageButton onClick={handleNextPageGroup} disabled={endPage === totalPages}>
+                    <FontAwesomeIcon icon={faGreaterThan}/>
+                </PageButton>
+                <PageButton onClick={handleLastPage} disabled={currentPage === totalPages}>
+                    <FontAwesomeIcon icon={faAnglesRight}/>
+                </PageButton>
+            </Pagination>
+        );
+    };
+
+    const writePost = () => {
+        navigate(`/${gameKey}/write`);
+    }
 
     return (
         <ListBox>
             <BBSHeader>홍보게시판</BBSHeader>
             <OptionRow>
-                {/* TODO API */}
                 <OptionButton>전체</OptionButton>
                 <OptionButton>리니지</OptionButton>
                 <OptionButton>리니지2</OptionButton>
@@ -20,12 +137,10 @@ const ListPage = ({gameKey}) => {
             <DivideHr/>
 
             <FlexRow>
-                {/* TODO API */}
                 <TitleText>리니지 M</TitleText>
                 <SearchAndWriteRow>
-                    {/* TODO API */}
-                    <FontAwesomeIcon icon={faMagnifyingGlass} />
-                    <WriteButton><FontAwesomeIcon icon={faPen}/> 쓰기</WriteButton>
+                    <FontAwesomeIcon icon={faMagnifyingGlass}/>
+                    <WriteButton onClick={writePost}><FontAwesomeIcon icon={faPen}/> 쓰기</WriteButton>
                 </SearchAndWriteRow>
             </FlexRow>
             <DivideHrBold/>
@@ -40,40 +155,48 @@ const ListPage = ({gameKey}) => {
                     <Th>조회수</Th>
                 </tr>
                 </thead>
-                {/* TODO API */}
-                <tbody>
-                {/*{posts ? posts.map((post, index) => (*/}
-                {/*    <tr key={index}>*/}
-                {/*        <Td></Td>*/}
-                {/*        <Td></Td>*/}
-                {/*        <Td></Td>*/}
-                {/*        <Td></Td>*/}
-                {/*        <Td></Td>*/}
-                {/*    </tr>*/}
-                {/*)) : (*/}
-                {/*    <tr>*/}
-                {/*        <Td colSpan={5}>게시글이 없습니다.</Td>*/}
-                {/*    </tr>*/}
-                {/*)}*/}
-                <tr>
-                    <Td>
-                        <HighlightButton>
-                            <FontAwesomeIcon icon={faThumbsUp} /> 추천
-                        </HighlightButton>
-                    </Td>
-                    <Td>행복서버 행복하러 오세요!</Td>
-                    <Td>빵떡이</Td>
-                    <Td>2024.05.12</Td>
-                    <Td>11</Td>
-                </tr>
-                </tbody>
+                <tbody>{loading ? <tr><Td colSpan={5}>Loading...</Td></tr> : renderRows()}</tbody>
             </DataTable>
+
+            {renderPagination()}
         </ListBox>
     );
-}
+};
 
-// Write 의 경우 800px 로 Editor 가 고정되었기 때문!
-// 해당 역할을 여기선 ListBox 가!
+const TableRow = ({title, nickname, date, views}) => (
+    <tr>
+        <Td>
+            <HighlightButton>
+                <FontAwesomeIcon icon={faThumbsUp}/> 추천
+            </HighlightButton>
+        </Td>
+        <Td>{title}</Td>
+        <Td>{nickname}</Td>
+        <Td>{date}</Td>
+        <Td>{views}</Td>
+    </tr>
+);
+
+const PageButton = styled.button`
+    background-color: ${props => (props.active ? 'blue' : 'white')};
+    color: ${props => (props.active ? 'white' : 'black')};
+    border: 1px solid black;
+    margin: 0 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+`;
+
+const Pagination = styled.div`
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+`;
+
 const ListBox = styled.div`
     width: 80%;
 `;
@@ -109,15 +232,14 @@ const OptionButton = styled.button`
 `;
 
 const FlexRow = styled.div`
-    //height: 40px;
     display: flex;
     justify-content: space-between;
 `;
 
 const TitleText = styled.span`
-    width: auto; // 너비 자동 조절
-    flex-shrink: 0; // 크기 축소 방지
-    margin-right: 20px; // 오른쪽 여백 설정
+    width: auto;
+    flex-shrink: 0;
+    margin-right: 20px;
 `;
 
 const SearchAndWriteRow = styled.div``;
@@ -147,20 +269,17 @@ const ThThumb = styled.th`
     width: 100px;
     background-color: #f4f4f4;
     padding: 8px;
-    //border: 1px solid #ddd;
 `;
 
 const ThTitle = styled.th`
     width: 60%;
     background-color: #f4f4f4;
     padding: 8px;
-    //border: 1px solid #ddd;
 `;
 
 const Th = styled.th`
     background-color: #f4f4f4;
     padding: 8px;
-    //border: 1px solid #ddd;
 `;
 
 const HighlightButton = styled.button`
@@ -175,14 +294,10 @@ const HighlightButton = styled.button`
     box-shadow: 2px 2px;
 `;
 
-const HighlightTitle = styled.div`
-
-`;
-
 const Td = styled.td`
     padding: 8px;
     border: 1px solid #ddd;
-    text-align: left;
+    text-align: center;
 `;
 
 export default ListPage;

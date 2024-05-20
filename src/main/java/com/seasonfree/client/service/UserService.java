@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -136,22 +137,33 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public JwtToken login(String userId, String password) {
-        // 1. username + password 를 기반으로 Authentication 객체 생성
-        // 이때 authentication 은 인증 여부를 확인하는 authenticated 값이 false
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userId, password);
+        try {
+            // 1. username + password 를 기반으로 Authentication 객체 생성
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userId, password);
 
-        // 2. 실제 검증. authenticate() 메서드를 통해 요청된 Member 에 대한 검증 진행
-        // authenticate 메서드가 실행될 때 CustomUserDetailsService 에서 만든 loadUserByUsername 메서드 실행
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+            // 2. 실제 검증. authenticate() 메서드를 통해 요청된 Member 에 대한 검증 진행
+            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
-        // user 정보 claim 에 넣기
-        User user = userRepository.findUserByUserId(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저 아이디를 찾을 수 없습니다."));
+            // user 정보 claim 에 넣기
+            User user = userRepository.findUserByUserId(userId)
+                    .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저 아이디를 찾을 수 없습니다."));
 
-        log.info("userName: {}, nickname: {}", user.getUsername(), user.getNickname());
-        // 3. 인증 정보를 기반으로 JWT 토큰 생성
-        return jwtTokenProvider.generateToken(user.getUsername(), user.getNickname(), authentication);
+            log.info("userName: {}, nickname: {}", user.getUsername(), user.getNickname());
+            // 3. 인증 정보를 기반으로 JWT 토큰 생성
+            return jwtTokenProvider.generateToken(user.getUsername(), user.getNickname(), authentication);
+
+        } catch (UsernameNotFoundException e) {
+            log.error("로그인 실패 - 사용자 없음: {}", e.getMessage());
+            throw new UsernameNotFoundException("해당하는 유저 아이디를 찾을 수 없습니다.");
+        } catch (BadCredentialsException e) {
+            log.error("로그인 실패 - 잘못된 자격 증명: {}", e.getMessage());
+            throw new BadCredentialsException("비밀번호가 틀렸습니다.");
+        } catch (Exception e) {
+            log.error("로그인 처리 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException("내부 서버 오류가 발생했습니다.");
+        }
     }
+
 
     @Transactional
     public Optional<String> findUserIdByEmail(String email, String otp) {

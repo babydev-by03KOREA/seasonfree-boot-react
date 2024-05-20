@@ -6,9 +6,13 @@ import Popup from "../../components/common/Popup";
 import StyledCalendar from "./Calendar";
 import React, {useEffect, useState} from "react";
 import {faCalendarCheck} from "@fortawesome/free-regular-svg-icons";
+import {useAuthDispatch} from "../../context/Auth";
 
 const AfterLogin = ({ nickname, points, imageUrl }) => {
+    const dispatch = useAuthDispatch();
+
     const onLogout = () => {
+        dispatch({type: 'LOGOUT'});
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         Swal.fire({

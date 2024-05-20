@@ -1,6 +1,7 @@
 package com.seasonfree.client.controller;
 
 import com.seasonfree.client.dto.request.*;
+import com.seasonfree.client.dto.request.UserDTO;
 import com.seasonfree.client.exception.CustomDuplicateFieldException;
 import com.seasonfree.client.jwt.JwtToken;
 import com.seasonfree.client.jwt.JwtTokenProvider;
@@ -27,15 +28,17 @@ public class UserController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    // TODO 아이디 비밀번호 다를 경우에도 500 에러?
     @PostMapping("/login")
     public ResponseEntity<?> signIn(@RequestBody LoginRequest loginRequest) {
         try {
             JwtToken token = userService.login(loginRequest.getUserId(), loginRequest.getPassword());
             return ResponseEntity.ok().body(token);  // JWT 토큰을 응답 본문에 포함
-        } catch (UsernameNotFoundException | BadCredentialsException e) {
-            log.error("로그인 실패: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("아이디나 비밀번호를 확인해주세요.");
+        } catch (UsernameNotFoundException e) {
+            log.error("로그인 실패 - 사용자 없음: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("가입되지 않은 사용자입니다.");
+        } catch (BadCredentialsException e) {
+            log.error("로그인 실패 - 잘못된 자격 증명: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 틀렸습니다.");
         } catch (Exception e) {
             log.error("로그인 처리 중 오류 발생: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("내부 서버 오류가 발생했습니다.");
@@ -133,6 +136,7 @@ public class UserController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        log.info("JWT 재발급 로직 접근");
         String refreshToken = request.get("refreshToken");
 
         if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {

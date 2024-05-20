@@ -1,6 +1,5 @@
 package com.seasonfree.client.configuration;
 
-import com.seasonfree.client.constant.Role;
 import com.seasonfree.client.jwt.JwtAuthenticationFilter;
 import com.seasonfree.client.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +34,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))  // 세션 정책 설정
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class); // JWT 인증 필터 추가
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

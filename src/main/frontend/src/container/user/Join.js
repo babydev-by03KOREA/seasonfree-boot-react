@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import styled from "styled-components";
-import { JoinApi, SendEmailApi } from "../../apis/user";
+import { JoinApi, SendEmailApi } from "../../apis/User";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCirclePlus, faUser } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";

@@ -5,9 +5,10 @@ import ButtonComponent from "../../components/common/Button";
 import Popup from "../../components/common/Popup";
 import Join from "./Join";
 import FindIdOrPassword from "./FindIdOrPassword";
-import {LoginApi} from "../../apis/user";
+import {LoginApi} from "../../apis/User";
+import {useAuthDispatch, useAuthState} from "../../context/Auth";
 
-const Login = ({ setIsLoggedIn, setUserInfo }) => {
+const Login = () => {
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
     const [isJoinPopupOpen, setIsJoinPopupOpen] = useState(false);
@@ -29,8 +30,10 @@ const Login = ({ setIsLoggedIn, setUserInfo }) => {
         setIsFindIdOrPasswordOpen(false);
     };
 
+    const dispatch = useAuthDispatch();
+
     const handleLogin = async () => {
-        await LoginApi(userId, password, setIsLoggedIn, setUserInfo);
+        await LoginApi(userId, password, dispatch);
     };
 
     return (
@@ -84,11 +87,11 @@ const LoginContainer = styled.div`
     width: 350px;
     height: 150px;
     border: 1px solid #282c34;
-    margin: 5px 0;
     padding-top: 20px;
     display: flex;
     flex-flow: column;
     align-items: center;
+    margin-bottom: 5px;
 `;
 
 const OptionRow = styled.div`

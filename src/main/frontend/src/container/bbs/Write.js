@@ -1,44 +1,53 @@
-import {useState} from "react";
+import { useState } from "react";
 import InputComponent from "../../components/common/Input";
 import styled from "styled-components";
 import Editor from "../../components/common/Editor";
 import ButtonComponent from "../../components/common/Button";
+import { useNavigate, useParams } from "react-router-dom";
+import { WritePost } from "../../apis/BBS";
 
 const WritePage = () => {
+    const { gameKey } = useParams();
     const [title, setTitle] = useState("");
-    const [context, setContext] = useState("");
+    const [content, setContent] = useState("");
     const [urlFirst, setUrlFirst] = useState("");
     const [urlSecond, setUrlSecond] = useState("");
+    const navigate = useNavigate();
 
-    const handleValueChange = (content) => {  // 입력값 변경 처리
-        setContext(content);
-        console.log(content);
+    const handleValueChange = (setter) => (e) => {
+        setter(e.target.value);
+    };
+
+    const handleSubmit = async () => {
+        await WritePost(title, content, urlFirst, urlSecond, gameKey, navigate);
     };
 
     return (
         <div>
             <WriteHeader>게시글 작성</WriteHeader>
             <TextWrite>글쓰기</TextWrite>
-            <DivideHr/>
+            <DivideHr />
 
             <TitleRow>
                 <TitleText>제목</TitleText>
                 <InputComponent
                     width={"100%"}
                     height={"25px"}
-                    onChange={setTitle}
+                    value={title}
+                    onChange={handleValueChange(setTitle)}
                 />
             </TitleRow>
-            <DivideHr/>
+            <DivideHr />
 
-            <Editor value={context} onChange={handleValueChange}/>
+            <Editor value={content} onChange={(value) => setContent(value)} />
 
-            <TitleRow style={{marginBottom: "10px"}}>
+            <TitleRow style={{ marginBottom: "10px" }}>
                 <TitleText>관련 링크</TitleText>
                 <InputComponent
                     width={"100%"}
                     height={"25px"}
-                    onChange={setUrlFirst}
+                    value={urlFirst}
+                    onChange={handleValueChange(setUrlFirst)}
                     placeholder={"https://..."}
                 />
             </TitleRow>
@@ -47,21 +56,35 @@ const WritePage = () => {
                 <InputComponent
                     width={"100%"}
                     height={"25px"}
-                    onChange={setUrlSecond}
+                    value={urlSecond}
+                    onChange={handleValueChange(setUrlSecond)}
                     placeholder={"https://..."}
                 />
             </TitleRow>
-            <DivideHr/>
+            <DivideHr />
             자동 등록 방지
             도메인 구매 후 reCaptcha 도입 예정
-            <DivideHr/>
+            <DivideHr />
             <ButtonRow>
-                <ButtonComponent height={"50px"} text={"취소"} background={"white"} fontsize={"20px"}/>
-                <ButtonComponent height={"50px"} text={"확인"} background={"black"} color={"white"} fontsize={"20px"} />
+                <ButtonComponent
+                    height={"50px"}
+                    text={"취소"}
+                    background={"white"}
+                    fontsize={"20px"}
+                    onClick={() => navigate(`/${gameKey}`)}
+                />
+                <ButtonComponent
+                    height={"50px"}
+                    text={"확인"}
+                    background={"black"}
+                    color={"white"}
+                    fontsize={"20px"}
+                    onClick={handleSubmit}
+                />
             </ButtonRow>
         </div>
     );
-}
+};
 
 const WriteHeader = styled.span`
     width: 100%;

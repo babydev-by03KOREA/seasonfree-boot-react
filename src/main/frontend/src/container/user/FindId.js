@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import {useForm} from "react-hook-form";
 import styled from "styled-components";
-import {FindIdApi, SendEmailApi, ValidateEmail} from "../../apis/user";
+import {FindIdApi, SendEmailApi, ValidateEmail} from "../../apis/User";
 
 const FindId = () => {
     const {register, handleSubmit, formState: {errors}} = useForm();

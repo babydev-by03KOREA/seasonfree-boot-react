@@ -1,6 +1,7 @@
 package com.seasonfree.client.service;
 
 import com.seasonfree.client.constant.GameCategory;
+import com.seasonfree.client.dto.LivePostDTO;
 import com.seasonfree.client.dto.PostDTO;
 import com.seasonfree.client.dto.request.CommentRequest;
 import com.seasonfree.client.dto.request.PostRequest;
@@ -36,27 +37,35 @@ public class BBSService {
     private final CategoryRepository categoryRepository;
     private final CommentRepository commentRepository;
 
+    @Transactional(readOnly = true)
+    public List<LivePostDTO> getTwoLivePost() {
+        Pageable pageable = PageRequest.of(0, 2); // Page request for the top 2 posts
+        Page<Post> postsPage = bbsRepository.findTop2ByOrderByWriteDateDesc(pageable);
+
+        return postsPage.stream()
+                .map(post -> new LivePostDTO(post.getId(), post.getCategory().getMainCategory().name(), post.getTitle()))
+                .collect(Collectors.toList());
+    }
+
     // 게임별 리스트 로직 처리
     @Transactional(readOnly = true)
-    public List<PostDTO> getPostsByCategory(GameCategory categoryType, int page, int size) {
+    public Page<PostDTO> getPostsByCategory(GameCategory categoryType, int page, int size) {
         Category category = categoryRepository.findByMainCategory(categoryType)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts = bbsRepository.findByCategory(category, pageable);
-        return posts.stream()
-                .map(PostDTO::new)
-                .collect(Collectors.toList());
+        return posts.map(PostDTO::new);
     }
 
     @Transactional(readOnly = true)
     public List<PostDTO> getPostsByMultipleCategories(List<GameCategory> categoryTypes, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
         List<Category> categories = categoryTypes.stream()
                 .map(categoryType -> categoryRepository.findByMainCategory(categoryType)
                         .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다: " + categoryType)))
                 .collect(Collectors.toList());
 
+        Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts = bbsRepository.findByCategoryIn(categories, pageable);
         return posts.stream()
                 .map(PostDTO::new)

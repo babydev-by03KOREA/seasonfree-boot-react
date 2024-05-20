@@ -17,7 +17,7 @@ import {AiOutlineLeft, AiOutlineRight} from "react-icons/ai";
 import {faCheck, faCircleCheck} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {useForm} from "react-hook-form";
-import {CalendarApi} from "../../apis/calendar";
+import {CalendarApi} from "../../apis/Calendar";
 import Swal from "sweetalert2";
 
 const CalendarComponent = () => {

@@ -15,10 +15,12 @@ import {useNavigate} from "react-router-dom";
 import {useState} from "react";
 import Popup from "./common/Popup";
 import CustomerService from "../container/user/CustomerService";
+import {useAuthState} from "../context/Auth";
 
 const Header = () => {
     const navigate = useNavigate();
     const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const { user } = useAuthState();
 
     const handleOpenPopup = () => {
         setIsPopupOpen(true);
@@ -40,8 +42,34 @@ const Header = () => {
         navigate(path);
     }
 
+    const handleOptionClick = (option) => {
+        switch(option) {
+            case "리니지2":
+                handleNavigate('/lineage-2');
+                break;
+            case "리마스터":
+                handleNavigate('/lineage-remaster');
+                break;
+            case "리니지M":
+                handleNavigate('/lineage-m');
+                break;
+            default:
+                break;
+        }
+    };
+
     const MenuValues = [
-        {name: "리니지", image: Lineage, hoverOptions: {option1: "리니지2", option2: "리마스터", option3: "리니지M"}},
+        {
+            name: "리니지",
+            image: Lineage,
+            path: "/lineage",
+            hoverOptions: {
+                option1: "리니지2",
+                option2: "리마스터",
+                option3: "리니지M"
+            },
+            onOptionClick: handleOptionClick
+        },
         {name: "뮤", image: Mue, hoverOptions: {}, path: "/mue"},
         {name: "바람의나라", image: CountryOfWind, hoverOptions: {},  path: "/baram"},
         {name: "메이플", image: Maple, hoverOptions: {},  path: "/maple"},
@@ -51,20 +79,27 @@ const Header = () => {
         {name: "던파", image: Dunpa, hoverOptions: {}, path: "/df"},
         {name: "스톤에이지", image: StonAge, hoverOptions: {}, path: "/stonage"},
         {name: "기타", image: Etc, hoverOptions: {}, path: "/etc"},
-        {name: "고객센터", image: CS, hoverOptions: {}, onClick: handleCustomerServiceClick},
+        {
+            name: user && user.role === 'ROLE_ADMIN' ? "문의내용" : "고객센터",
+            image: CS,
+            hoverOptions: {},
+            onClick: user && user.role === 'ROLE_ADMIN' ? () => handleNavigate('/admin/support') : handleOpenPopup
+        }
     ];
 
     return (
         <MainHeader>
             <LogoImage onClick={navigationMain}/>
             {MenuValues.map((game) => (
-                <GameMenu key={game.name} onClick={() => game.onClick ? game.onClick() : handleNavigate(game.path)}>
-                <GameImage style={{backgroundImage: `url(${game.image})`}}/>
-                    <GameName>{game.name}</GameName>
+                <GameMenu key={game.name}>
+                    <GameImage style={{backgroundImage: `url(${game.image})`}} onClick={() => game.onClick ? game.onClick() : handleNavigate(game.path)} />
+                    <GameName onClick={() => game.onClick ? game.onClick() : handleNavigate(game.path)}>{game.name}</GameName>
                     {Object.keys(game.hoverOptions).length > 0 && (
                         <DropdownContent className="dropdown-content">
-                            {Object.entries(game.hoverOptions).map(([key, value], index, array) => (
-                                <DropdownItem key={key}>{value}</DropdownItem>
+                            {Object.entries(game.hoverOptions).map(([key, value]) => (
+                                <DropdownItem key={key} onClick={() => game.onOptionClick(value)}>
+                                    {value}
+                                </DropdownItem>
                             ))}
                         </DropdownContent>
                     )}
@@ -74,7 +109,7 @@ const Header = () => {
                 <Popup
                     isOpen={isPopupOpen}
                     title={"고객센터에 문의하기"}
-                    content={<CustomerService/>}
+                    content={<CustomerService />}
                     onClose={handleClosePopup}
                 />
             )}

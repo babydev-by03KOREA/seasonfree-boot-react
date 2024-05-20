@@ -47,7 +47,7 @@ public class JwtTokenProvider {
 
         String accessToken = Jwts.builder()
                 .setSubject(email)
-                .claim("username", email    )
+                .claim("username", email)
                 .claim("nickname", userNickname)
                 .claim("auth", authorities)
                 .setIssuedAt(new Date(now))
@@ -150,5 +150,4 @@ public class JwtTokenProvider {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
-
 }

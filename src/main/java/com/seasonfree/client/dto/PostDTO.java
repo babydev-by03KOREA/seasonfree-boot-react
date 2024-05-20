@@ -27,7 +27,7 @@ public class PostDTO {
         this.postType = post.getPostType();
         this.writeDate = post.getWriteDate();
         this.watch = post.getWatch();
-        this.author = post.getUser().getEmail();
+        this.author = post.getUser().getNickname();
     }
 }
 

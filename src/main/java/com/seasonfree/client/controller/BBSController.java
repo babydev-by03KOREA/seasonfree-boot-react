@@ -1,10 +1,10 @@
 package com.seasonfree.client.controller;
 
 import com.seasonfree.client.constant.GameCategory;
+import com.seasonfree.client.dto.LivePostDTO;
 import com.seasonfree.client.dto.PostDTO;
 import com.seasonfree.client.dto.request.CommentRequest;
 import com.seasonfree.client.dto.request.PostRequest;
-import com.seasonfree.client.entity.Post;
 import com.seasonfree.client.service.BBSService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,8 +57,14 @@ public class BBSController {
         gameRoutes.put("ETC", "/etc");
     }
 
+    @GetMapping("/live-post")
+    public ResponseEntity<?> mainLivePost() {
+        List<LivePostDTO> liveTwoPost = bbsService.getTwoLivePost();
+        return ResponseEntity.ok(liveTwoPost);
+    }
+
     @GetMapping("/{game}")
-    public ResponseEntity<?> handleGameRoute(@PathVariable String game, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
+    public ResponseEntity<?> handleGameRoute(@PathVariable("game") String game, @RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "size", defaultValue = "15") int size) {
         GameCategory categoryType;
         try {
             categoryType = GameCategory.valueOf(game.toUpperCase());
@@ -66,7 +72,7 @@ public class BBSController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당하는 게임을 찾을 수 없습니다.");
         }
 
-        List<PostDTO> response = bbsService.getPostsByCategory(categoryType, page, size);
+        Page<PostDTO> response = bbsService.getPostsByCategory(categoryType, page, size);
         return ResponseEntity.ok(response);
     }
 
