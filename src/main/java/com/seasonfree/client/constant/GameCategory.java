@@ -2,7 +2,7 @@ package com.seasonfree.client.constant;
 
 public enum GameCategory {
     LINEAGE,
-    LINEAGE_2,
+    LINEAGE2,
     REMASTER,
     LINEAGE_M,
     MUE,

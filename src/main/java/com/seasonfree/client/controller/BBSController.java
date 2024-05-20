@@ -6,12 +6,10 @@ import com.seasonfree.client.dto.PostDTO;
 import com.seasonfree.client.dto.request.CommentRequest;
 import com.seasonfree.client.dto.request.PostRequest;
 import com.seasonfree.client.service.BBSService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,7 +22,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.text.Normalizer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +61,7 @@ public class BBSController {
     }
 
     @GetMapping("/{game}")
-    public ResponseEntity<?> handleGameRoute(@PathVariable("game") String game, @RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "size", defaultValue = "15") int size) {
+    public ResponseEntity<?> handleGameRoute(@PathVariable("game") String game, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "15") int size) {
         GameCategory categoryType;
         try {
             categoryType = GameCategory.valueOf(game.toUpperCase());
@@ -72,25 +69,13 @@ public class BBSController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당하는 게임을 찾을 수 없습니다.");
         }
 
-        Page<PostDTO> response = bbsService.getPostsByCategory(categoryType, page, size);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/combined/{game}")
-    public ResponseEntity<?> handleCombinedGameRoute(@PathVariable String game, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "15") int size) {
-        List<GameCategory> categoryTypes = new ArrayList<>();
-
-        switch (game.toUpperCase()) {
-            case "LINEAGE":
-                categoryTypes.add(GameCategory.LINEAGE_2);
-                categoryTypes.add(GameCategory.REMASTER);
-                categoryTypes.add(GameCategory.LINEAGE_M);
-                break;
-            default:
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당하는 게임을 찾을 수 없습니다.");
+        Page<PostDTO> response;
+        if (categoryType == GameCategory.LINEAGE) {
+            response = bbsService.getPostsForLineage(page, size);
+        } else {
+            response = bbsService.getPostsByCategory(categoryType, page, size);
         }
 
-        List<PostDTO> response = bbsService.getPostsByMultipleCategories(categoryTypes, page, size);
         return ResponseEntity.ok(response);
     }
 

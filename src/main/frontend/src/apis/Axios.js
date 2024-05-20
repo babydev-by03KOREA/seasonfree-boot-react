@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const tokenRequiredRoutes = ['/bbs/write', '/attendance/check', '/user/info'];
 
@@ -59,6 +60,7 @@ axiosInstance.interceptors.response.use(
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
                 window.location.href = '/';
+                return Promise.reject(error);
             }
         }
         return Promise.reject(error);

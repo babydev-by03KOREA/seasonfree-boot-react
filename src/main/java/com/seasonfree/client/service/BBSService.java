@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,17 +60,18 @@ public class BBSService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostDTO> getPostsByMultipleCategories(List<GameCategory> categoryTypes, int page, int size) {
-        List<Category> categories = categoryTypes.stream()
+    public Page<PostDTO> getPostsForLineage(int page, int size) {
+        List<GameCategory> gameCategories = Arrays.asList(GameCategory.LINEAGE, GameCategory.LINEAGE2, GameCategory.REMASTER, GameCategory.LINEAGE_M);
+
+        // GameCategory를 Category로 변환
+        List<Category> categories = gameCategories.stream()
                 .map(categoryType -> categoryRepository.findByMainCategory(categoryType)
-                        .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다: " + categoryType)))
+                        .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다.")))
                 .collect(Collectors.toList());
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts = bbsRepository.findByCategoryIn(categories, pageable);
-        return posts.stream()
-                .map(PostDTO::new)
-                .collect(Collectors.toList());
+        return posts.map(PostDTO::new);
     }
 
     @Transactional

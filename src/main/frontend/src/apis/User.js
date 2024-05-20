@@ -2,8 +2,11 @@ import Swal from "sweetalert2";
 import axiosInstance from "./Axios";
 
 export const LoginApi = async (userId, password, dispatch) => {
+    console.log('로그인 시도 중...');
+    
     try {
         const response = await axiosInstance.post('/user/login', {userId, password});
+        console.log('로그인 성공:', response.data);
 
         const accessToken = response.data.accessToken;
         const refreshToken = response.data.refreshToken;
@@ -26,8 +29,10 @@ export const LoginApi = async (userId, password, dispatch) => {
         };
 
         dispatch({type: 'LOGIN', payload: {user, accessToken, refreshToken}});
+        console.log('로그인 및 사용자 정보 저장 완료');
 
     } catch (error) {
+        console.error('로그인 시도 중 오류발생:', error);
         if (error.response) {
             Swal.fire({
                 icon: "error",

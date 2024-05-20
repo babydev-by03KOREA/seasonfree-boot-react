@@ -45,13 +45,13 @@ const Header = () => {
     const handleOptionClick = (option) => {
         switch(option) {
             case "리니지2":
-                handleNavigate('/lineage-2');
+                handleNavigate('/lineage2');
                 break;
             case "리마스터":
-                handleNavigate('/lineage-remaster');
+                handleNavigate('/remaster');
                 break;
             case "리니지M":
-                handleNavigate('/lineage-m');
+                handleNavigate('/lineage_m');
                 break;
             default:
                 break;
